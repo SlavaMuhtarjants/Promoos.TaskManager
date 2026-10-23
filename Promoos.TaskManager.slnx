@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yaml" />
+  </Folder>
+  <Project Path="Promoos.TaskManager.Api/Promoos.TaskManager.Api.csproj" />
+  <Project Path="Promoos.TaskManager.Tests/Promoos.TaskManager.Tests.csproj" />
+</Solution>
