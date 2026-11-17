@@ -18,7 +18,7 @@ The API exposes the following endpoints for task management:
 - `POST /tasks` — Creates a new task.
 - `GET /tasks` — Retrieves a list of all existing tasks.
 - `DELETE /tasks/{id}` — Deletes a task.
-- `PUT /tasks/{id}/complete` — Marks a task as completed and publishes a task completion event to RabbitMQ.
+- `PUT /tasks/{id}/complete` — Marks a task as completed and queues a task completion event, which a background worker publishes to RabbitMQ asynchronously. The queue is in-memory, so events can be lost on a hard crash.
 
 ## Configuration & Sensitive Data
 

@@ -23,9 +23,14 @@ public class TaskIntegrationTests : IClassFixture<WebApplicationFactory<Program>
 {
     private readonly WebApplicationFactory<Program> _factory;
     private readonly ITaskEventPublisher _publisherMock = Substitute.For<ITaskEventPublisher>();
+    private readonly TaskCompletionSource _published = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public TaskIntegrationTests(WebApplicationFactory<Program> factory)
     {
+        _publisherMock
+            .When(x => x.PublishCompletedAsync(Arg.Any<TaskCompletedEvent>(), Arg.Any<CancellationToken>()))
+            .Do(_ => _published.TrySetResult());
+
         _factory = factory.WithWebHostBuilder(builder =>
         {
             builder.ConfigureServices(services =>
@@ -83,6 +88,8 @@ public class TaskIntegrationTests : IClassFixture<WebApplicationFactory<Program>
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, completeResponse.StatusCode);
+
+        await _published.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         await _publisherMock.Received(1).PublishCompletedAsync(
             Arg.Is<TaskCompletedEvent>(x => x.TaskId == taskId && x.Title == "Buy milk"),

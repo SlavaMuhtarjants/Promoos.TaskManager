@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Promoos.TaskManager.Api.Contracts;
 using Promoos.TaskManager.Api.Dto;
 using Promoos.TaskManager.Api.Mappers;
-using Promoos.TaskManager.Api.Publishers;
+using Promoos.TaskManager.Api.Channels;
 using Promoos.TaskManager.Api.Services;
 
 namespace Promoos.TaskManager.Api.Endpoints;
@@ -58,7 +58,7 @@ public static class TaskEndpoints
     private static async Task<IResult> CompleteTaskAsync(
         Guid id,
         [FromServices] TaskService taskService,
-        [FromServices] ITaskEventPublisher eventPublisher,
+        [FromServices] TaskCompletedEventChannel eventChannel,
         CancellationToken cancellationToken)
     {
         var result = await taskService.CompleteAsync(id, cancellationToken);
@@ -71,8 +71,7 @@ public static class TaskEndpoints
                 result.Value.CompletedAt!.Value,
                 result.Value.Priority);
 
-            // TODO: delegate publishing the event to a background service/worker.
-            await eventPublisher.PublishCompletedAsync(message, cancellationToken);
+            await eventChannel.AddEventAsync(message, cancellationToken);
 
             return Microsoft.AspNetCore.Http.Results.Ok();
         }

@@ -5,8 +5,10 @@ using NReco.Logging.File;
 using Promoos.TaskManager.Api.Configuration;
 using Promoos.TaskManager.Api.Database;
 using Promoos.TaskManager.Api.Endpoints;
+using Promoos.TaskManager.Api.Channels;
 using Promoos.TaskManager.Api.Publishers;
 using Promoos.TaskManager.Api.Services;
+using Promoos.TaskManager.Api.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,7 @@ builder.Services
     .AddOptions<RabbitMqOptions>()
     .BindConfiguration("RabbitMq");
 
-// On shutdown, give in-flight requests (and publications they started) up to 5 seconds to complete.
+// On shutdown, give in-flight requests and queued task-completed events up to 5 seconds to complete.
 builder.Services.Configure<HostOptions>(hostOptions => hostOptions.ShutdownTimeout = TimeSpan.FromSeconds(5));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -40,7 +42,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Dependency injection configuration
 builder.Services.AddScoped<TaskService>();
+builder.Services.AddSingleton<TaskCompletedEventChannel>();
 builder.Services.AddSingleton<ITaskEventPublisher, RabbitMqEventPublisher>();
+builder.Services.AddHostedService<TaskCompletedEventPublishingWorker>();
 
 var app = builder.Build();
 
