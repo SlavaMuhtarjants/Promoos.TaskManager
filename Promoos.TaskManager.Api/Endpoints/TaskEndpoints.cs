@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 
+using System.ComponentModel.DataAnnotations;
+
 using Promoos.TaskManager.Api.Contracts;
 using Promoos.TaskManager.Api.Dto;
 using Promoos.TaskManager.Api.Mappers;
@@ -38,11 +40,13 @@ public static class TaskEndpoints
 
     private static async Task<IResult> GetTasksAsync(
         [FromServices] TaskService taskService,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, 100)] int pageSize = 20)
     {
-        var items = await taskService.GetAsync(cancellationToken);
+        var result = await taskService.GetAsync(page, pageSize, cancellationToken);
 
-        return TypedResults.Ok(items);
+        return TypedResults.Ok(result);
     }
 
     private static async Task<IResult> DeleteTaskAsync(

@@ -27,13 +27,21 @@ public sealed class TaskService(AppDbContext dbContext)
         return Result<Guid>.Success(task.Id);
     }
 
-    public async Task<IReadOnlyCollection<TaskResponse>> GetAsync(CancellationToken cancellationToken)
+    public async Task<PagedResponse<TaskResponse>> GetAsync(int page, int pageSize, CancellationToken cancellationToken)
     {
-        var items = await dbContext.Set<TaskItem>()
+        var query = dbContext.Set<TaskItem>();
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenBy(x => x.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new TaskResponse(x.Id, x.Title, x.Priority.ToString(), x.IsCompleted, x.CreatedAt, x.CompletedAt))
             .ToArrayAsync(cancellationToken);
 
-        return items;
+        return new PagedResponse<TaskResponse>(items, page, pageSize, totalCount);
     }
 
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
